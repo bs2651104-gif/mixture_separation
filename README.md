@@ -1,1 +1,1 @@
-# mixture_separation_lab_game.html
+# mixture_separation_lab_game_index.html
