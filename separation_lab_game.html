@@ -1,0 +1,1029 @@
+<!DOCTYPE html>
+<html lang="ko" class="h-full">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>분리실험실 (Separation Lab) - 접근성 과학 학습 게임</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;600;700;900&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --font-scale: 1;
+        }
+
+        html {
+            font-size: calc(16px * var(--font-scale));
+        }
+
+        body {
+            font-family: 'Noto Sans KR', system-ui, -apple-system, sans-serif;
+            background-color: #0f172a;
+            color: #f8fafc;
+            min-height: 100vh;
+        }
+
+        /* High Contrast Theme Overrides */
+        body.high-contrast {
+            background-color: #000000 !important;
+            color: #ffffff !important;
+        }
+
+        body.high-contrast .hc-element {
+            background-color: #000000 !important;
+            border-color: #ffff00 !important;
+            color: #ffffff !important;
+        }
+
+        body.high-contrast button {
+            border: 2px solid #ffff00 !important;
+            background: #000000 !important;
+            color: #ffff00 !important;
+        }
+
+        body.high-contrast button:focus-visible {
+            outline: 4px solid #00ffff !important;
+            outline-offset: 4px;
+        }
+
+        /* Keyboard Focus Ring Style */
+        *:focus-visible {
+            outline: 3px solid #38bdf8 !important;
+            outline-offset: 3px !important;
+        }
+
+        .glass-panel {
+            background: rgba(30, 41, 59, 0.85);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.15);
+        }
+
+        body.high-contrast .glass-panel {
+            background: #000000 !important;
+            border: 2px solid #ffffff !important;
+        }
+
+        /* Accessible Skip Link */
+        .skip-link {
+            position: absolute;
+            top: -40px;
+            left: 10px;
+            background: #0284c7;
+            color: #ffffff;
+            padding: 8px 16px;
+            z-index: 100;
+            transition: top 0.2s;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+
+        .skip-link:focus {
+            top: 10px;
+        }
+
+        /* Custom Scrollbars */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #0284c7;
+            border-radius: 5px;
+        }
+
+        canvas {
+            touch-action: none;
+        }
+    </style>
+</head>
+<body class="flex flex-col min-h-screen text-slate-100">
+
+    <a href="#mainContent" class="skip-link">본문 영역으로 바로가기 (Skip to Content)</a>
+
+    <!-- Accessibility Live Region for Screen Readers -->
+    <div id="srAnnouncer" class="sr-only" aria-live="polite" aria-atomic="true"></div>
+
+    <header role="banner" class="glass-panel sticky top-0 z-40 px-4 py-3 border-b border-slate-700/80">
+        <div class="max-w-7xl mx-auto flex flex-wrap items-center justify-between gap-3">
+            
+            <!-- Brand / Logo -->
+            <div class="flex items-center space-x-3 cursor-pointer" onclick="switchTab('stages')" role="button" tabindex="0" onkeydown="if(event.key==='Enter'||event.key===' ') switchTab('stages')">
+                <div class="w-10 h-10 rounded-xl bg-teal-500 flex items-center justify-center text-slate-950 font-black shadow-lg">
+                    <i class="fa-solid fa-flask-vial text-xl" aria-hidden="true"></i>
+                </div>
+                <div>
+                    <h1 class="text-xl font-black tracking-wide text-teal-300">
+                        분리실험실 <span class="text-xs px-2 py-0.5 rounded-full bg-teal-900/80 text-teal-200 border border-teal-500">Accessible Game</span>
+                    </h1>
+                    <p class="text-xs text-slate-300">접근성 강화 과학 혼합물 분리 학습 플랫폼</p>
+                </div>
+            </div>
+
+            <!-- Accessibility Quick Toolbar -->
+            <div class="flex items-center space-x-2 bg-slate-900/90 p-1.5 rounded-xl border border-slate-700 hc-element" aria-label="접근성 설정 도구 모음" role="toolbar">
+                <!-- Text Resize Toggle -->
+                <button onclick="adjustTextSize(1)" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200" title="글자 크기 확대" aria-label="글자 크기 확대">
+                    <span aria-hidden="true">가+</span>
+                </button>
+                <button onclick="adjustTextSize(-1)" class="px-2.5 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs font-bold text-slate-200" title="글자 크기 축소" aria-label="글자 크기 축소">
+                    <span aria-hidden="true">가-</span>
+                </button>
+                <button onclick="resetTextSize()" class="px-2 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-xs text-slate-300" title="글자 크기 초기화" aria-label="글자 크기 초기화">
+                    초기화
+                </button>
+
+                <div class="h-4 w-[1px] bg-slate-700" role="separator"></div>
+
+                <!-- High Contrast Mode Toggle -->
+                <button id="hcToggle" onclick="toggleHighContrast()" class="px-2.5 py-1.5 rounded-lg bg-amber-500 text-slate-950 hover:bg-amber-400 font-bold text-xs flex items-center gap-1" aria-label="고대비 모드 토글">
+                    <i class="fa-solid fa-circle-half-stroke" aria-hidden="true"></i>
+                    <span class="hidden sm:inline">고대비</span>
+                </button>
+
+                <!-- Sound Toggle -->
+                <button id="soundToggle" onclick="toggleAudio()" class="p-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-teal-400" title="소리 토글" aria-label="음향 효과 토글">
+                    <i id="soundIcon" class="fa-solid fa-volume-high text-lg" aria-hidden="true"></i>
+                </button>
+            </div>
+
+            <!-- Main Navigation Buttons -->
+            <nav class="flex items-center space-x-2" aria-label="주 메뉴">
+                <button onclick="switchTab('stages')" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-semibold border border-slate-700 flex items-center gap-1.5">
+                    <i class="fa-solid fa-map-location-dot text-teal-400" aria-hidden="true"></i>
+                    <span>퀘스트 지도</span>
+                </button>
+                <button onclick="switchTab('encyclopedia')" class="px-3 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-semibold border border-slate-700 flex items-center gap-1.5">
+                    <i class="fa-solid fa-book-bookmark text-amber-400" aria-hidden="true"></i>
+                    <span>원리 노트</span>
+                </button>
+                <button onclick="switchTab('sandbox')" class="px-3 py-2 rounded-xl bg-teal-600 hover:bg-teal-500 text-slate-950 font-bold text-xs sm:text-sm flex items-center gap-1.5 shadow-md">
+                    <i class="fa-solid fa-flask" aria-hidden="true"></i>
+                    <span>가상 실험실</span>
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <main id="mainContent" class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 flex flex-col justify-center" tabIndex="-1">
+        
+        <!-- SECTION 1: STAGE SELECTION QUEST MAP -->
+        <section id="viewStages" class="space-y-6" aria-labelledby="headingStages">
+            <div class="text-center max-w-2xl mx-auto space-y-2">
+                <h2 id="headingStages" class="text-2xl sm:text-3xl font-black text-slate-100">분리실험실 퀘스트 모드</h2>
+                <p class="text-sm text-slate-300">키보드 탭키 또는 마우스로 원하는 스테이지를 선택해 탐구를 시작하세요.</p>
+            </div>
+
+            <!-- Global Score Status -->
+            <div class="glass-panel p-4 rounded-2xl flex items-center justify-between border border-teal-500/30 hc-element" role="region" aria-label="현재 총 진행 상태">
+                <div class="flex items-center space-x-3">
+                    <i class="fa-solid fa-trophy text-2xl text-amber-400" aria-hidden="true"></i>
+                    <div>
+                        <span class="text-xs text-slate-400 block">누적 점수</span>
+                        <span id="globalScore" class="text-xl font-bold text-amber-300">0 점</span>
+                    </div>
+                </div>
+                <div class="text-right">
+                    <span class="text-xs text-slate-400 block">현재 연구원 칭호</span>
+                    <span id="globalRank" class="text-sm sm:text-base font-bold text-teal-300">견습 연구원</span>
+                </div>
+            </div>
+
+            <!-- Stage Cards Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="stageGrid" role="list" aria-label="스테이지 목록">
+                <!-- Dynamically generated stage buttons via JS -->
+            </div>
+        </section>
+
+        <!-- SECTION 2: GAMEPLAY ARENA -->
+        <section id="viewGame" class="hidden flex-col items-center max-w-4xl mx-auto w-full space-y-4" aria-label="게임을 진행하는 영역">
+            <!-- Header Controls -->
+            <div class="w-full flex flex-wrap items-center justify-between glass-panel p-3.5 rounded-2xl gap-2 hc-element">
+                <button onclick="exitToStages()" class="px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 text-slate-200 text-xs sm:text-sm font-semibold flex items-center gap-1.5 border border-slate-700">
+                    <i class="fa-solid fa-arrow-left" aria-hidden="true"></i> 퀘스트 지도로 돌아가기
+                </button>
+                <div class="text-center">
+                    <h3 id="gameTitle" class="font-bold text-teal-300 text-base sm:text-lg">스테이지 제목</h3>
+                    <p id="gameMethod" class="text-xs text-slate-300">적용 분리 원리</p>
+                </div>
+                <div class="bg-slate-900 px-3 py-1 rounded-lg border border-slate-700 font-mono text-amber-300 text-sm">
+                    현재 점수: <span id="stageScore">0</span>
+                </div>
+            </div>
+
+            <!-- Interactive Visual Game Sandbox Surface -->
+            <div class="w-full glass-panel rounded-3xl p-4 sm:p-6 relative overflow-hidden flex flex-col items-center justify-center min-h-[420px] border border-teal-500/30 hc-element" id="stageSurface">
+                
+                <div id="gamePlayArea" class="w-full flex flex-col items-center justify-center min-h-[380px] relative space-y-4">
+                    <!-- Stage specific UI loaded here -->
+                </div>
+
+                <!-- Overlay Notification Modal -->
+                <div id="gameOverlay" class="hidden absolute inset-0 bg-slate-950/90 backdrop-blur-md flex flex-col items-center justify-center p-6 text-center z-30 hc-element" role="dialog" aria-modal="true" aria-labelledby="overlayTitle">
+                    <div id="overlayContent" class="space-y-4 max-w-md">
+                        <!-- Populated dynamically -->
+                    </div>
+                </div>
+            </div>
+
+            <!-- Educational Explanation Footer -->
+            <div class="w-full glass-panel p-4 rounded-2xl text-xs sm:text-sm border border-slate-700 flex items-start gap-3 hc-element" role="region" aria-label="과학 원리 설명">
+                <i class="fa-solid fa-lightbulb text-amber-400 text-xl mt-0.5" aria-hidden="true"></i>
+                <div>
+                    <h4 class="font-bold text-amber-300 mb-0.5">핵심 과학 원리 노트</h4>
+                    <p id="stageHintText" class="text-slate-200 leading-relaxed">원리 설명이 표시됩니다.</p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: VIRTUAL SANDBOX -->
+        <section id="viewSandbox" class="hidden space-y-6 max-w-4xl mx-auto w-full" aria-labelledby="headingSandbox">
+            <div class="text-center space-y-1">
+                <h2 id="headingSandbox" class="text-2xl font-black text-teal-300">자유 가상 실험실 (Sandbox)</h2>
+                <p class="text-xs sm:text-sm text-slate-300">두 가지 물질을 자유롭게 섞고 올바른 분리 도구를 시도해보세요.</p>
+            </div>
+
+            <div class="glass-panel p-6 rounded-3xl space-y-6 border border-teal-500/30 hc-element">
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="space-y-2">
+                        <label for="sbMaterial1" class="text-xs font-bold text-teal-300 uppercase tracking-wider block">첫 번째 물질</label>
+                        <select id="sbMaterial1" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-teal-400 hc-element">
+                            <option value="water">물 (액체)</option>
+                            <option value="salt">소금 (용해 고체)</option>
+                            <option value="sand">모래 (불용성 고체)</option>
+                            <option value="iron">철 가루 (자성 물질)</option>
+                            <option value="oil">식용유 (밀도 낮은 액체)</option>
+                            <option value="ink">사인펜 잉크 (혼합 색소)</option>
+                        </select>
+                    </div>
+                    <div class="space-y-2">
+                        <label for="sbMaterial2" class="text-xs font-bold text-teal-300 uppercase tracking-wider block">두 번째 물질</label>
+                        <select id="sbMaterial2" class="w-full bg-slate-900 border border-slate-700 rounded-xl px-4 py-3 text-slate-100 focus:outline-none focus:border-teal-400 hc-element">
+                            <option value="sand" selected>모래 (불용성 고체)</option>
+                            <option value="water">물 (액체)</option>
+                            <option value="salt">소금 (용해 고체)</option>
+                            <option value="iron">철 가루 (자성 물질)</option>
+                            <option value="oil">식용유 (밀도 낮은 액체)</option>
+                            <option value="ink">사인펜 잉크 (혼합 색소)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="bg-slate-900 rounded-2xl p-4 text-center border border-slate-800 hc-element">
+                    <div class="text-xs text-slate-400 mb-1">생성된 혼합물</div>
+                    <div id="sbMixDisplay" class="text-base font-bold text-amber-300">물 + 모래 혼합물</div>
+                </div>
+
+                <div class="space-y-2">
+                    <span class="text-xs font-bold text-teal-300 uppercase tracking-wider block">적용할 분리 도구/방법 선택</span>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                        <button onclick="runSandboxTest('filtration')" class="p-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs sm:text-sm font-semibold flex flex-col items-center gap-1">
+                            <i class="fa-solid fa-filter text-teal-400 text-lg" aria-hidden="true"></i>
+                            <span>거름 (Filtration)</span>
+                        </button>
+                        <button onclick="runSandboxTest('magnet')" class="p-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs sm:text-sm font-semibold flex flex-col items-center gap-1">
+                            <i class="fa-solid fa-magnet text-rose-400 text-lg" aria-hidden="true"></i>
+                            <span>자석 (Magnet)</span>
+                        </button>
+                        <button onclick="runSandboxTest('evaporation')" class="p-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs sm:text-sm font-semibold flex flex-col items-center gap-1">
+                            <i class="fa-solid fa-fire text-amber-400 text-lg" aria-hidden="true"></i>
+                            <span>증발 (Evaporation)</span>
+                        </button>
+                        <button onclick="runSandboxTest('funnel')" class="p-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs sm:text-sm font-semibold flex flex-col items-center gap-1">
+                            <i class="fa-solid fa-wine-glass text-blue-400 text-lg" aria-hidden="true"></i>
+                            <span>분별 깔때기 (Density)</span>
+                        </button>
+                        <button onclick="runSandboxTest('chromatography')" class="p-3 rounded-xl bg-slate-800 hover:bg-slate-700 border border-slate-700 text-xs sm:text-sm font-semibold flex flex-col items-center gap-1">
+                            <i class="fa-solid fa-vial text-purple-400 text-lg" aria-hidden="true"></i>
+                            <span>크로마토그래피</span>
+                        </button>
+                    </div>
+                </div>
+
+                <div id="sbResult" class="hidden bg-slate-900 p-5 rounded-2xl border border-teal-500/40 space-y-2 hc-element" role="region" aria-live="polite">
+                    <h4 id="sbResultTitle" class="font-bold text-teal-300 text-base">실험 결과</h4>
+                    <p id="sbResultDesc" class="text-sm text-slate-200 leading-relaxed"></p>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: ENCYCLOPEDIA (원리 노트) -->
+        <section id="viewEncyclopedia" class="hidden space-y-6 max-w-5xl mx-auto w-full" aria-labelledby="headingEncyclopedia">
+            <div class="text-center space-y-1">
+                <h2 id="headingEncyclopedia" class="text-2xl sm:text-3xl font-black text-amber-300">혼합물의 분리 원리 노트</h2>
+                <p class="text-xs sm:text-sm text-slate-300">교과 과정 핵심 물리적 성질과 실생활 분리 사례</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5" id="encGrid" role="list">
+                <!-- Dynamically generated encyclopedia cards -->
+            </div>
+        </section>
+    </main>
+
+    <footer role="contentinfo" class="glass-panel mt-auto border-t border-slate-800 text-center py-4 px-4 text-xs text-slate-400 hc-element">
+        <p>© 2026 분리실험실 (Separation Lab) — 웹 접근성 준수(WCAG 2.1 AA) 과학교육 인터랙티브 앱</p>
+    </footer>
+
+    <script>
+        class SoundEngine {
+            constructor() {
+                this.ctx = null;
+                this.muted = false;
+            }
+
+            init() {
+                if (!this.ctx) {
+                    const AudioCtx = window.AudioContext || window.webkitAudioContext;
+                    this.ctx = new AudioCtx();
+                }
+            }
+
+            announce(text) {
+                const el = document.getElementById('srAnnouncer');
+                if (el) {
+                    el.innerText = text;
+                }
+            }
+
+            playBeep(freq = 440, duration = 0.1) {
+                if (this.muted) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, this.ctx.currentTime);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + duration);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + duration);
+            }
+
+            playCorrect() {
+                if (this.muted) return;
+                this.init();
+                const now = this.ctx.currentTime;
+                [523.25, 659.25, 783.99].forEach((f, i) => {
+                    const osc = this.ctx.createOscillator();
+                    const gain = this.ctx.createGain();
+                    osc.frequency.setValueAtTime(f, now + i * 0.08);
+                    gain.gain.setValueAtTime(0.2, now + i * 0.08);
+                    gain.gain.exponentialRampToValueAtTime(0.01, now + i * 0.08 + 0.2);
+                    osc.connect(gain);
+                    gain.connect(this.ctx.destination);
+                    osc.start(now + i * 0.08);
+                    osc.stop(now + i * 0.08 + 0.2);
+                });
+            }
+
+            playWrong() {
+                if (this.muted) return;
+                this.init();
+                const osc = this.ctx.createOscillator();
+                const gain = this.ctx.createGain();
+                osc.type = 'sawtooth';
+                osc.frequency.setValueAtTime(150, this.ctx.currentTime);
+                osc.frequency.linearRampToValueAtTime(100, this.ctx.currentTime + 0.2);
+                gain.gain.setValueAtTime(0.2, this.ctx.currentTime);
+                gain.gain.exponentialRampToValueAtTime(0.01, this.ctx.currentTime + 0.2);
+                osc.connect(gain);
+                gain.connect(this.ctx.destination);
+                osc.start();
+                osc.stop(this.ctx.currentTime + 0.2);
+            }
+        }
+
+        const sound = new SoundEngine();
+
+        function toggleAudio() {
+            sound.muted = !sound.muted;
+            const icon = document.getElementById('soundIcon');
+            if (sound.muted) {
+                icon.className = 'fa-solid fa-volume-xmark text-slate-500';
+                sound.announce("음향 효과가 켜졌습니다.");
+            } else {
+                icon.className = 'fa-solid fa-volume-high text-teal-400';
+                sound.playBeep(600, 0.1);
+                sound.announce("음향 효과가 꺼졌습니다.");
+            }
+        }
+    </script>
+
+    <script>
+        let fontScaleLevel = 0;
+        const fontScales = [1.0, 1.15, 1.3];
+
+        function adjustTextSize(delta) {
+            fontScaleLevel = Math.max(0, Math.min(fontScales.length - 1, fontScaleLevel + delta));
+            document.documentElement.style.setProperty('--font-scale', fontScales[fontScaleLevel]);
+            sound.announce(`글자 크기가 ${Math.round(fontScales[fontScaleLevel] * 100)}% 로 조정되었습니다.`);
+            sound.playBeep(500, 0.05);
+        }
+
+        function resetTextSize() {
+            fontScaleLevel = 0;
+            document.documentElement.style.setProperty('--font-scale', 1.0);
+            sound.announce("글자 크기가 기본값으로 초기화되었습니다.");
+            sound.playBeep(400, 0.05);
+        }
+
+        function toggleHighContrast() {
+            document.body.classList.toggle('high-contrast');
+            const isHC = document.body.classList.contains('high-contrast');
+            sound.announce(isHC ? "고대비 모드가 활성화되었습니다." : "고대비 모드가 해제되었습니다.");
+            sound.playBeep(700, 0.1);
+        }
+    </script>
+
+    <script>
+        const STAGES = [
+            {
+                id: 1,
+                title: "커피 가루 거름 추출",
+                method: "거름 (Filtration)",
+                icon: "fa-filter",
+                color: "border-amber-500",
+                badge: "거름 탐정",
+                desc: "입자 크기 차이를 이용해 액체 속 녹지 않는 커피 알갱이를 걸러내세요.",
+                principle: "거름종이의 미세한 구멍보다 작 은 물 입자는 통과하고, 입자가 큰 커피 가루는 걸러집니다."
+            },
+            {
+                id: 2,
+                title: "재활용 자석 선별",
+                method: "자성 차이 (Magnetic)",
+                icon: "fa-magnet",
+                color: "border-rose-500",
+                badge: "자석 마스터",
+                desc: "컨베이어 벨트 위의 쓰레기 중 자석을 움직여 철캔만 끌어당기세요.",
+                principle: "철, 니켈 등의 자성체는 자석의 끌어당기는 힘에 끌려오지만 플라스틱이나 알루미늄은 끌려오지 않습니다."
+            },
+            {
+                id: 3,
+                title: "바닷물 염전 천일염",
+                method: "증발/가열 (Evaporation)",
+                icon: "fa-fire",
+                color: "border-amber-400",
+                badge: "열에너지 연금술사",
+                desc: "가열 버튼으로 적정 온도를 유지하여 물만 증발시키고 소금을 얻으세요.",
+                principle: "물이 끓어 수증기 기체로 변해 날아가는 증발 현상을 이용해 끓지 않는 소금을 분리합니다."
+            },
+            {
+                id: 4,
+                title: "비밀 잉크 크로마토그래피",
+                method: "크로마토그래피",
+                icon: "fa-vial",
+                color: "border-purple-500",
+                badge: "색소 분석관",
+                desc: "용매를 따라 이동하는 색소들의 속도 차이를 관찰하고 분리된 색상을 알아맞히세요.",
+                principle: "혼합물을 이루는 각 성분 물질이 용매를 따라 이동하는 속도가 서로 다른 성질을 이용합니다."
+            },
+            {
+                id: 5,
+                title: "물과 기름 분별 깔때기",
+                method: "밀도 차이 (Density)",
+                icon: "fa-wine-glass",
+                color: "border-blue-500",
+                badge: "밀도 관리자",
+                desc: "밀도가 커서 아래로 가라앉은 물이 다 빠져나갈 때 밸브를 정확히 잠그세요.",
+                principle: "서로 섞이지 않는 두 액체를 두면 밀도가 큰 액체는 아래로, 밀도가 작은 액체는 위로 분리됩니다."
+            },
+            {
+                id: 6,
+                title: "마스터 분리 올림피아드",
+                method: "종합 분리 원리",
+                icon: "fa-trophy",
+                color: "border-emerald-500",
+                badge: "수석 연구원",
+                desc: "다양한 일상 혼합물이 등장합니다. 올바른 분리 도구를 빠르게 고르세요.",
+                principle: "물질의 물리적 특성(입자 크기, 끓는점, 밀도, 자성 등)을 종합 판단하여 분리합니다."
+            }
+        ];
+
+        let gameState = {
+            score: 0,
+            completed: {},
+            currentStage: null,
+            timer: null
+        };
+
+        function switchTab(tab) {
+            sound.playBeep(500, 0.05);
+            document.getElementById('viewStages').classList.add('hidden');
+            document.getElementById('viewGame').classList.add('hidden');
+            document.getElementById('viewGame').classList.remove('flex');
+            document.getElementById('viewSandbox').classList.add('hidden');
+            document.getElementById('viewEncyclopedia').classList.add('hidden');
+
+            if (tab === 'stages') {
+                renderStageGrid();
+                document.getElementById('viewStages').classList.remove('hidden');
+                sound.announce("퀘스트 지도 화면으로 이동했습니다.");
+            } else if (tab === 'sandbox') {
+                document.getElementById('viewSandbox').classList.remove('hidden');
+                updateSandboxDisplay();
+                sound.announce("자유 가상 실험실 화면으로 이동했습니다.");
+            } else if (tab === 'encyclopedia') {
+                renderEncyclopedia();
+                document.getElementById('viewEncyclopedia').classList.remove('hidden');
+                sound.announce("원리 노트 화면으로 이동했습니다.");
+            }
+        }
+
+        function renderStageGrid() {
+            const grid = document.getElementById('stageGrid');
+            grid.innerHTML = STAGES.map(st => {
+                const isDone = gameState.completed[st.id];
+                return `
+                    <div role="listitem" class="glass-card p-5 rounded-2xl border-2 ${st.color} flex flex-col justify-between space-y-4 hc-element">
+                        <div class="space-y-2">
+                            <div class="flex items-center justify-between">
+                                <span class="px-2.5 py-1 rounded-lg text-xs font-bold bg-slate-800 text-teal-300 border border-slate-700">Stage ${st.id}</span>
+                                <span class="text-amber-400 font-bold text-xs">${isDone ? '★ 완료됨' : '☆ 도전 가능'}</span>
+                            </div>
+                            <h3 class="text-lg font-bold text-slate-100">${st.title}</h3>
+                            <p class="text-xs text-teal-400 font-semibold">${st.method}</p>
+                            <p class="text-xs text-slate-300">${st.desc}</p>
+                        </div>
+                        <button onclick="startStage(${st.id})" class="w-full py-2.5 rounded-xl bg-teal-600 hover:bg-teal-500 font-bold text-xs text-slate-950 flex items-center justify-center gap-2" aria-label="Stage ${st.id} ${st.title} 도전하기">
+                            <i class="fa-solid fa-play" aria-hidden="true"></i> 실험 시작하기
+                        </button>
+                    </div>
+                `;
+            }).join('');
+
+            document.getElementById('globalScore').innerText = `${gameState.score} 점`;
+        }
+
+        function exitToStages() {
+            if (gameState.timer) clearInterval(gameState.timer);
+            switchTab('stages');
+        }
+    </script>
+
+    <script>
+        function startStage(stageId) {
+            sound.playBeep(600, 0.08);
+            const st = STAGES.find(s => s.id === stageId);
+            gameState.currentStage = st;
+
+            document.getElementById('viewStages').classList.add('hidden');
+            const gameView = document.getElementById('viewGame');
+            gameView.classList.remove('hidden');
+            gameView.classList.add('flex');
+
+            document.getElementById('gameTitle').innerText = `Stage ${st.id}: ${st.title}`;
+            document.getElementById('gameMethod').innerText = `분리 원리: ${st.method}`;
+            document.getElementById('stageHintText').innerText = st.principle;
+            document.getElementById('stageScore').innerText = '0';
+            document.getElementById('gameOverlay').classList.add('hidden');
+
+            sound.announce(`Stage ${st.id} ${st.title} 탐구가 시작되었습니다.`);
+
+            const area = document.getElementById('gamePlayArea');
+            area.innerHTML = '';
+
+            if (stageId === 1) renderStage1(area);
+            else if (stageId === 2) renderStage2(area);
+            else if (stageId === 3) renderStage3(area);
+            else if (stageId === 4) renderStage4(area);
+            else if (stageId === 5) renderStage5(area);
+            else if (stageId === 6) renderStage6(area);
+        }
+
+        /* Stage 1: Filtration */
+        function renderStage1(area) {
+            area.innerHTML = `
+                <div class="flex flex-col items-center space-y-4 w-full max-w-md">
+                    <p class="text-xs text-slate-200 text-center">버튼을 눌러 1단계: 거름종이를 장착한 후, 2단계: 커피 혼합물을 부으세요.</p>
+                    <div class="w-64 h-56 bg-slate-900 rounded-2xl border border-slate-700 flex flex-col items-center justify-center p-4 hc-element relative">
+                        <canvas id="canvas1" width="220" height="200" aria-label="거름 실험 시뮬레이션 캔버스"></canvas>
+                    </div>
+                    <div class="flex gap-3 w-full">
+                        <button id="btnPaper" onclick="s1AddPaper()" class="flex-1 py-3 bg-teal-600 hover:bg-teal-500 font-bold text-xs text-slate-950 rounded-xl">1. 거름종이 장착</button>
+                        <button id="btnPour" onclick="s1Pour()" disabled class="flex-1 py-3 bg-slate-700 opacity-50 font-bold text-xs text-slate-300 rounded-xl cursor-not-allowed">2. 혼합물 따르기</button>
+                    </div>
+                </div>
+            `;
+
+            const canvas = document.getElementById('canvas1');
+            const ctx = canvas.getContext('2d');
+            let paperAdded = false;
+
+            function drawFunnel(pouring = false, prog = 0) {
+                ctx.clearRect(0,0,220,200);
+                // Funnel
+                ctx.strokeStyle = '#94a3b8';
+                ctx.lineWidth = 3;
+                ctx.beginPath();
+                ctx.moveTo(60,40); ctx.lineTo(160,40); ctx.lineTo(120,110); ctx.lineTo(120,150); ctx.lineTo(100,150); ctx.lineTo(100,110); ctx.closePath();
+                ctx.stroke();
+
+                if (paperAdded) {
+                    ctx.fillStyle = '#ffffff';
+                    ctx.beginPath();
+                    ctx.moveTo(68,48); ctx.lineTo(152,48); ctx.lineTo(110,105); ctx.closePath();
+                    ctx.fill();
+                }
+
+                if (pouring) {
+                    // Trapped Coffee Particles
+                    ctx.fillStyle = '#78350f';
+                    for(let i=0; i<Math.min(prog, 30); i++) {
+                        ctx.beginPath();
+                        ctx.arc(80 + (i*7)%60, 55 + (i*3)%35, 3, 0, Math.PI*2);
+                        ctx.fill();
+                    }
+                    // Filtered Clear Water Stream
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.fillRect(107, 110, 6, 40);
+                }
+            }
+
+            drawFunnel();
+
+            window.s1AddPaper = () => {
+                paperAdded = true;
+                sound.playBeep(600, 0.08);
+                sound.announce("거름종이가 성공적으로 장착되었습니다. 혼합물을 따르세요.");
+                document.getElementById('btnPaper').innerText = "✓ 장착 완료";
+                const pour = document.getElementById('btnPour');
+                pour.disabled = false;
+                pour.classList.remove('bg-slate-700','opacity-50','cursor-not-allowed');
+                pour.classList.add('bg-amber-500','hover:bg-amber-400','text-slate-950');
+                drawFunnel();
+            };
+
+            window.s1Pour = () => {
+                sound.playBeep(700, 0.08);
+                let prog = 0;
+                const timer = setInterval(() => {
+                    prog += 2;
+                    drawFunnel(true, prog);
+                    if (prog >= 50) {
+                        clearInterval(timer);
+                        sound.playCorrect();
+                        finishStage(1, 100, "거름종이 구멍보다 알갱이가 큰 커피 가루는 남고 맑은 물만 분리되었습니다!");
+                    }
+                }, 50);
+            };
+        }
+
+        /* Stage 2: Magnet */
+        function renderStage2(area) {
+            area.innerHTML = `
+                <div class="flex flex-col items-center space-y-3 w-full max-w-md">
+                    <p class="text-xs text-slate-200 text-center">좌우 버튼이나 키보드 방향키(←, →)로 자석을 움직여 철캔만 끌어당기세요.</p>
+                    <div class="w-full h-52 bg-slate-900 rounded-2xl border border-slate-700 relative overflow-hidden hc-element">
+                        <canvas id="canvas2" width="380" height="208" class="w-full h-full"></canvas>
+                    </div>
+                    <div class="flex justify-between items-center w-full">
+                        <span class="text-xs text-amber-300 font-bold">수집된 철캔: <span id="s2Count">0</span> / 5</span>
+                        <div class="flex gap-2">
+                            <button onclick="moveMag(-30)" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-base font-bold border border-slate-600" aria-label="자석 왼쪽으로 이동">◀</button>
+                            <button onclick="moveMag(30)" class="px-4 py-2 bg-slate-800 hover:bg-slate-700 rounded-xl text-base font-bold border border-slate-600" aria-label="자석 오른쪽으로 이동">▶</button>
+                        </div>
+                    </div>
+                </div>
+            `;
+
+            const canvas = document.getElementById('canvas2');
+            const ctx = canvas.getContext('2d');
+            let magX = 170;
+            let collected = 0;
+            let items = [
+                { x: 20, type: 'iron', got: false },
+                { x: 90, type: 'plastic', got: false },
+                { x: 150, type: 'iron', got: false },
+                { x: 220, type: 'iron', got: false },
+                { x: 290, type: 'plastic', got: false },
+                { x: 340, type: 'iron', got: false },
+                { x: 400, type: 'iron', got: false }
+            ];
+
+            window.moveMag = (delta) => {
+                magX = Math.max(20, Math.min(320, magX + delta));
+                sound.playBeep(500, 0.03);
+            };
+
+            const keyHandler = (e) => {
+                if (e.key === 'ArrowLeft') moveMag(-25);
+                if (e.key === 'ArrowRight') moveMag(25);
+            };
+            window.addEventListener('keydown', keyHandler);
+
+            const timer = setInterval(() => {
+                ctx.clearRect(0,0,380,208);
+
+                // Magnet
+                ctx.fillStyle = '#ef4444';
+                ctx.fillRect(magX, 20, 30, 40);
+
+                // Conveyor
+                ctx.fillStyle = '#334155';
+                ctx.fillRect(0, 170, 380, 20);
+
+                items.forEach(it => {
+                    if (!it.got) {
+                        it.x = (it.x + 1.5) % 380;
+
+                        if (it.type === 'iron' && Math.abs(it.x - magX) < 25) {
+                            it.got = true;
+                            collected++;
+                            sound.playBeep(800, 0.05);
+                            document.getElementById('s2Count').innerText = collected;
+                            sound.announce(`철캔 수집! 현재 ${collected}개`);
+                        }
+
+                        ctx.fillStyle = it.type === 'iron' ? '#94a3b8' : '#22c55e';
+                        ctx.beginPath(); ctx.arc(it.x, 155, 10, 0, Math.PI*2); ctx.fill();
+                    }
+                });
+
+                if (collected >= 5) {
+                    clearInterval(timer);
+                    window.removeEventListener('keydown', keyHandler);
+                    sound.playCorrect();
+                    finishStage(2, 100, "자석의 끌어당기는 힘(자성)으로 자성체인 철캔만 분류했습니다!");
+                }
+            }, 40);
+
+            gameState.timer = timer;
+        }
+
+        /* Stage 3: Evaporation */
+        function renderStage3(area) {
+            area.innerHTML = `
+                <div class="flex flex-col items-center space-y-4 w-full max-w-md">
+                    <p class="text-xs text-slate-200 text-center">가열 버튼을 눌러 온도를 <b class="text-emerald-400">적정 구간(60~90°C)</b>으로 유지하며 바닷물을 증발시키세요.</p>
+                    <div class="w-full bg-slate-900 p-4 rounded-2xl border border-slate-700 flex flex-col items-center space-y-3 hc-element">
+                        <div class="text-sm font-bold text-amber-300">현재 온도: <span id="s3Temp">20</span> °C</div>
+                        <div class="w-full bg-slate-800 h-4 rounded-full overflow-hidden border border-slate-700 relative">
+                            <div id="s3Bar" class="bg-amber-500 h-full w-[20%] transition-all"></div>
+                        </div>
+                    </div>
+                    <button onclick="s3Heat()" class="w-full py-3 bg-gradient-to-r from-amber-500 to-rose-600 font-bold text-slate-950 rounded-xl text-sm shadow-md">
+                        🔥 가열하기 (온도 올리기)
+                    </button>
+                </div>
+            `;
+
+            let temp = 20;
+            let water = 100;
+
+            window.s3Heat = () => {
+                temp = Math.min(110, temp + 12);
+                sound.playBeep(600, 0.04);
+            };
+
+            const timer = setInterval(() => {
+                temp = Math.max(20, temp - 2);
+                document.getElementById('s3Temp').innerText = Math.round(temp);
+                document.getElementById('s3Bar').style.width = `${(temp/110)*100}%`;
+
+                if (temp >= 60 && temp <= 95) {
+                    water -= 2;
+                }
+
+                if (water <= 0) {
+                    clearInterval(timer);
+                    sound.playCorrect();
+                    finishStage(3, 100, "물이 기체 수증기로 모두 증발하고 용기 바닥에 하얀 소금만 남았습니다!");
+                }
+            }, 100);
+
+            gameState.timer = timer;
+        }
+
+        /* Stage 4: Chromatography */
+        function renderStage4(area) {
+            area.innerHTML = `
+                <div class="flex flex-col items-center space-y-4 w-full max-w-md">
+                    <p class="text-xs text-slate-200 text-center">용매가 스며들며 번지는 색소들의 이동 속도를 확인하고 분리된 성분을 맞히세요.</p>
+                    <button id="btnChromaStart" onclick="s4Start()" class="w-full py-3 bg-purple-600 hover:bg-purple-500 text-slate-950 font-bold rounded-xl text-xs">💧 용매 스며들게 하기</button>
+                    <div id="s4Quiz" class="hidden flex gap-2 w-full">
+                        <button onclick="s4Ans(true)" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-xl text-xs font-bold text-teal-300">노랑 + 분홍 + 파랑</button>
+                        <button onclick="s4Ans(false)" class="flex-1 py-3 bg-slate-800 hover:bg-slate-700 border border-slate-600 rounded-xl text-xs font-bold text-rose-300">단일 검은색</button>
+                    </div>
+                </div>
+            `;
+
+            window.s4Start = () => {
+                sound.playBeep(600, 0.08);
+                document.getElementById('btnChromaStart').classList.add('hidden');
+                sound.announce("용매가 스며들고 있습니다. 분리된 색상을 관찰하세요.");
+                setTimeout(() => {
+                    document.getElementById('s4Quiz').classList.remove('hidden');
+                }, 1500);
+            };
+
+            window.s4Ans = (correct) => {
+                if (correct) {
+                    sound.playCorrect();
+                    finishStage(4, 100, "각 색소 성분이 용매를 따라 이동하는 속도 차이를 이용해 다양한 색상을 분리했습니다!");
+                } else {
+                    sound.playWrong();
+                }
+            };
+        }
+
+        /* Stage 5: Density */
+        function renderStage5(area) {
+            area.innerHTML = `
+                <div class="flex flex-col items-center space-y-4 w-full max-w-md">
+                    <p class="text-xs text-slate-200 text-center">아래층의 물이 거의 다 나갔을 때 밸브 버튼을 눌러 정확히 잠그세요.</p>
+                    <div class="w-48 h-52 bg-slate-900 border border-slate-700 rounded-2xl flex items-center justify-center hc-element">
+                        <canvas id="canvas5" width="180" height="200"></canvas>
+                    </div>
+                    <button onclick="s5Toggle()" class="w-full py-3 bg-teal-600 hover:bg-teal-500 font-bold text-slate-950 rounded-xl text-xs">🚰 밸브 열기 / 잠그기</button>
+                </div>
+            `;
+
+            const canvas = document.getElementById('canvas5');
+            const ctx = canvas.getContext('2d');
+            let isOpen = false;
+            let water = 70;
+
+            window.s5Toggle = () => {
+                isOpen = !isOpen;
+                sound.playBeep(600, 0.05);
+
+                if (!isOpen) {
+                    if (water <= 10 && water >= -10) {
+                        sound.playCorrect();
+                        finishStage(5, 100, "밀도가 큰 물만 아래로 완전히 빠져나가고, 위층의 기름만 성공적으로 분리되었습니다!");
+                    } else {
+                        sound.playWrong();
+                        finishStage(5, 50, "타이밍이 아쉬웠습니다! 기름이 유출되었거나 물이 남았습니다.");
+                    }
+                }
+            };
+
+            const timer = setInterval(() => {
+                if (isOpen) water -= 2;
+                ctx.clearRect(0,0,180,200);
+
+                // Funnel
+                ctx.strokeStyle = '#94a3b8'; ctx.lineWidth = 3;
+                ctx.strokeRect(60,20,60,140);
+
+                // Water (Bottom)
+                if (water > 0) {
+                    ctx.fillStyle = '#38bdf8';
+                    ctx.fillRect(62, 160 - water, 56, water);
+                }
+                // Oil (Top)
+                ctx.fillStyle = '#eab308';
+                ctx.fillRect(62, 160 - water - 50, 56, 50);
+
+                // Valve
+                ctx.fillStyle = isOpen ? '#22c55e' : '#ef4444';
+                ctx.fillRect(50, 160, 80, 10);
+            }, 50);
+
+            gameState.timer = timer;
+        }
+
+        /* Stage 6: Ultimate Olympiad */
+        function renderStage6(area) {
+            const quiz = [
+                { title: "바닷물에서 소금 추출", ans: "evaporate" },
+                { title: "철 가루와 모래", ans: "magnet" },
+                { title: "물과 식용유 분리", ans: "density" }
+            ];
+            let idx = 0;
+
+            function renderQ() {
+                if (idx >= quiz.length) {
+                    sound.playCorrect();
+                    finishStage(6, 100, "모든 혼합물 분리 원리 퀴즈를 맞히고 최우수 수석 연구원이 되셨습니다!");
+                    return;
+                }
+                area.innerHTML = `
+                    <div class="flex flex-col items-center space-y-4 w-full max-w-md text-center">
+                        <span class="text-xs text-teal-300 font-bold">문제 ${idx+1} / ${quiz.length}</span>
+                        <div class="p-4 bg-slate-900 border border-slate-700 rounded-2xl w-full hc-element">
+                            <h4 class="text-lg font-bold text-amber-300">${quiz[idx].title}</h4>
+                            <p class="text-xs text-slate-300 mt-1">알맞은 분리 원리를 고르세요.</p>
+                        </div>
+                        <div class="grid grid-cols-3 gap-2 w-full">
+                            <button onclick="s6Ans('evaporate')" class="p-3 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold text-slate-100">증발</button>
+                            <button onclick="s6Ans('magnet')" class="p-3 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold text-slate-100">자석</button>
+                            <button onclick="s6Ans('density')" class="p-3 bg-slate-800 border border-slate-700 rounded-xl text-xs font-bold text-slate-100">밀도 차이</button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            window.s6Ans = (choice) => {
+                if (choice === quiz[idx].ans) {
+                    sound.playBeep(700, 0.05);
+                } else {
+                    sound.playWrong();
+                }
+                idx++;
+                renderQ();
+            };
+
+            renderQ();
+        }
+
+        function finishStage(stageId, score, summaryText) {
+            gameState.score += score;
+            gameState.completed[stageId] = true;
+
+            sound.announce(`축하합니다! Stage ${stageId} 성공. ${summaryText}`);
+
+            const overlay = document.getElementById('gameOverlay');
+            const content = document.getElementById('overlayContent');
+
+            content.innerHTML = `
+                <div class="text-4xl" aria-hidden="true">🎉</div>
+                <h3 id="overlayTitle" class="text-xl font-bold text-amber-300">Stage ${stageId} 완료!</h3>
+                <p class="text-xs text-slate-200 leading-relaxed">${summaryText}</p>
+                <button onclick="exitToStages()" class="px-6 py-2.5 bg-teal-500 hover:bg-teal-400 font-bold text-slate-950 rounded-xl text-xs shadow-md">
+                    퀘스트 지도로 돌아가기
+                </button>
+            `;
+            overlay.classList.remove('hidden');
+        }
+    </script>
+
+    <script>
+        function updateSandboxDisplay() {
+            const m1 = document.getElementById('sbMaterial1').selectedOptions[0].text;
+            const m2 = document.getElementById('sbMaterial2').selectedOptions[0].text;
+            document.getElementById('sbMixDisplay').innerText = `${m1} + ${m2} 혼합물`;
+            document.getElementById('sbResult').classList.add('hidden');
+        }
+
+        document.getElementById('sbMaterial1').addEventListener('change', updateSandboxDisplay);
+        document.getElementById('sbMaterial2').addEventListener('change', updateSandboxDisplay);
+
+        function runSandboxTest(method) {
+            sound.playBeep(500, 0.05);
+            const m1 = document.getElementById('sbMaterial1').value;
+            const m2 = document.getElementById('sbMaterial2').value;
+
+            const resBox = document.getElementById('sbResult');
+            const resTitle = document.getElementById('sbResultTitle');
+            const resDesc = document.getElementById('sbResultDesc');
+            resBox.classList.remove('hidden');
+
+            const isPair = (a, b) => (m1 === a && m2 === b) || (m1 === b && m2 === a);
+
+            if (m1 === m2) {
+                resTitle.innerText = "⚠️ 동일한 물질";
+                resDesc.innerText = "같은 물질 끼리는 혼합물이 되지 않습니다. 다른 물질을 선택하세요.";
+            } else if (method === 'filtration' && isPair('water', 'sand')) {
+                resTitle.innerText = "✅ 성공적 분리 (거름)";
+                resDesc.innerText = "거름종이 구멍 입자 크기 차이로 모래와 물을 완벽히 분리했습니다.";
+            } else if (method === 'magnet' && (m1 === 'iron' || m2 === 'iron')) {
+                resTitle.innerText = "✅ 성공적 분리 (자석)";
+                resDesc.innerText = "자성을 지닌 철 가루만 끌어당겨 분리했습니다.";
+            } else if (method === 'evaporation' && isPair('water', 'salt')) {
+                resTitle.innerText = "✅ 성공적 분리 (증발)";
+                resDesc.innerText = "물이 수증기로 증발하여 바닥에 소금만 남습니다.";
+            } else if (method === 'funnel' && isPair('water', 'oil')) {
+                resTitle.innerText = "✅ 성공적 분리 (밀도 차이)";
+                resDesc.innerText = "밀도가 큰 물을 아래로 내보내어 분리했습니다.";
+            } else {
+                resTitle.innerText = "❌ 효과적이지 않은 방법";
+                resDesc.innerText = "이 물질 조합에는 선택하신 도구가 적합하지 않습니다. 다른 방법을 시도해 보세요.";
+            }
+
+            sound.announce(`${resTitle.innerText}. ${resDesc.innerText}`);
+        }
+
+        function renderEncyclopedia() {
+            const container = document.getElementById('encGrid');
+            const items = [
+                { title: "거름 (Filtration)", badge: "입자 크기 차이", desc: "액체에 녹지 않는 고체 입자를 거름종이 구멍 크기 차이로 걸러냅니다.", ex: "원두커피 추출, 흙탕물 정화" },
+                { title: "자석 분리 (Magnetic)", badge: "자성 차이", desc: "철이나 니켈처럼 자석에 붙는 성질을 가진 물질을 끌어당깁니다.", ex: "재활용 선별장 철캔 수거" },
+                { title: "증발 (Evaporation)", badge: "끓는점 차이", desc: "액체 성분을 기체로 증발시켜 고체 성분만 남깁니다.", ex: "염전에서 소금 얻기" },
+                { title: "밀도 차이 (Density)", badge: "밀도 차이", desc: "섞이지 않는 두 액체 중 밀도가 큰 것이 아래로 가라앉는 원리입니다.", ex: "물과 기름 분리" },
+                { title: "크로마토그래피", badge: "이동 속도 차이", desc: "용매를 따라 물질이 이동하는 속도가 서로 다른 점을 이용합니다.", ex: "사인펜 색소 분석, 도핑 검사" }
+            ];
+
+            container.innerHTML = items.map(it => `
+                <div role="listitem" class="glass-card p-5 rounded-2xl border border-slate-700 space-y-2 hc-element">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-teal-300 bg-teal-950 px-2.5 py-1 rounded-full border border-teal-500">${it.badge}</span>
+                    </div>
+                    <h3 class="text-base font-bold text-amber-300">${it.title}</h3>
+                    <p class="text-xs text-slate-200 leading-relaxed">${it.desc}</p>
+                    <p class="text-xs text-slate-400 pt-2 border-t border-slate-800"><b>예시:</b> ${it.ex}</p>
+                </div>
+            `).join('');
+        }
+
+        // Initialize Application
+        window.onload = function() {
+            renderStageGrid();
+        };
+    </script>
+</body>
+</html>
